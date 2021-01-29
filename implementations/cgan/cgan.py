@@ -104,10 +104,10 @@ if cuda:
     adversarial_loss.cuda()
 
 # Configure data loader
-os.makedirs("../../data/mnist", exist_ok=True)
+os.makedirs("home/data/mnist", exist_ok=True)
 dataloader = torch.utils.data.DataLoader(
     datasets.MNIST(
-        "../../data/mnist",
+        "home/data/mnist",
         train=True,
         download=True,
         transform=transforms.Compose(
