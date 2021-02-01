@@ -116,18 +116,20 @@ generator.apply(weights_init_normal)
 discriminator.apply(weights_init_normal)
 
 # Configure data loader
-os.makedirs("/home/data/mnist", exist_ok=True)
+os.makedirs("/home/data/CIFAR10", exist_ok=True)
 dataloader = torch.utils.data.DataLoader(
-    datasets.MNIST(
-        "/home/data/mnist",
+    datasets.CIFAR10(
+        "/home/data/CIFAR10",
         train=True,
         download=True,
         transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         ),
     ),
     batch_size=opt.batch_size,
     shuffle=True,
+    num_workers=opt.n_cpu,
+    pin_memory=True,
 )
 
 # Optimizers
