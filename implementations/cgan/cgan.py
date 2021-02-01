@@ -16,6 +16,7 @@ import torch
 
 os.makedirs("images", exist_ok=True)
 
+# 参数解析
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
@@ -31,25 +32,35 @@ parser.add_argument("--sample_interval", type=int, default=400, help="interval b
 opt = parser.parse_args()
 print(opt)
 
+# 样本尺寸定义
 img_shape = (opt.channels, opt.img_size, opt.img_size)
 
+# cuda调用
 cuda = True if torch.cuda.is_available() else False
 
-
+# 生成器定义
 class Generator(nn.Module):
     def __init__(self):
-        super(Generator, self).__init__()
+        # 属于python2的旧语法
+        #super(Generator, self).__init__()
+        super().__init__()
 
+        # 构建标签和标签向量（label embedding）的映射，第一个参数表示标签种类个数，第二个参数表示每个标签的维度
         self.label_emb = nn.Embedding(opt.n_classes, opt.n_classes)
 
+        # 构建层函数
         def block(in_feat, out_feat, normalize=True):
             layers = [nn.Linear(in_feat, out_feat)]
             if normalize:
+                # 对于当前输入的batch的数据进行归一化，避免梯度消失
                 layers.append(nn.BatchNorm1d(out_feat, 0.8))
+            # LeakyReLU是给负值输入乘以一个系数，inplace表示的是是否直接将输出结果覆盖到输入变量（节省内存）
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
-
+        
+        # block前的星号将list拆成单个元素
         self.model = nn.Sequential(
+            # 这里之所以需要加上 opt.n_classes是因为cgan需要输入类别向量，latent_dim表示的是噪声z的维度
             *block(opt.latent_dim + opt.n_classes, 128, normalize=False),
             *block(128, 256),
             *block(256, 512),
@@ -60,15 +71,18 @@ class Generator(nn.Module):
 
     def forward(self, noise, labels):
         # Concatenate label embedding and image to produce input
+        # torch.cat的作用是将两个张量拼接到一起
         gen_input = torch.cat((self.label_emb(labels), noise), -1)
         img = self.model(gen_input)
+        # view函数的第一个参数img.size(0)表示的是什么？？
         img = img.view(img.size(0), *img_shape)
         return img
 
-
+# 判别器定义
 class Discriminator(nn.Module):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        #super(Discriminator, self).__init__()
+        super().__init__()
 
         self.label_embedding = nn.Embedding(opt.n_classes, opt.n_classes)
 
@@ -99,15 +113,16 @@ generator = Generator()
 discriminator = Discriminator()
 
 if cuda:
+    print("Use cuda!")
     generator.cuda()
     discriminator.cuda()
     adversarial_loss.cuda()
 
 # Configure data loader
-os.makedirs("home/data/mnist", exist_ok=True)
+os.makedirs("/home/data/mnist", exist_ok=True)
 dataloader = torch.utils.data.DataLoader(
     datasets.MNIST(
-        "home/data/mnist",
+        "/home/data/mnist",
         train=True,
         download=True,
         transform=transforms.Compose(
@@ -116,6 +131,8 @@ dataloader = torch.utils.data.DataLoader(
     ),
     batch_size=opt.batch_size,
     shuffle=True,
+    num_workers=opt.n_cpu,
+    pin_memory=True,
 )
 
 # Optimizers
