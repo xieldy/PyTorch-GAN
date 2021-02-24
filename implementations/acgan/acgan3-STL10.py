@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-os.makedirs("images", exist_ok=True)
+os.makedirs("STL10", exist_ok=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
@@ -47,10 +47,10 @@ class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        self.label_emb = nn.Embedding(opt.n_classes, opt.latent_dim)
+        self.label_emb = nn.Embedding(opt.n_classes, opt.n_classes)
 
         self.init_size = opt.img_size // 4  # Initial size before upsampling
-        self.l1 = nn.Sequential(nn.Linear(opt.latent_dim, 128 * self.init_size ** 2))
+        self.l1 = nn.Sequential(nn.Linear(opt.latent_dim + opt.n_classes, 128 * self.init_size ** 2))
 
         self.conv_blocks = nn.Sequential(
             nn.BatchNorm2d(128),
@@ -67,7 +67,7 @@ class Generator(nn.Module):
         )
 
     def forward(self, noise, labels):
-        gen_input = torch.mul(self.label_emb(labels), noise)
+        gen_input = torch.cat((self.label_emb(labels), noise), -1)
         out = self.l1(gen_input)
         out = out.view(out.shape[0], 128, self.init_size, self.init_size)
         img = self.conv_blocks(out)
@@ -127,14 +127,14 @@ generator.apply(weights_init_normal)
 discriminator.apply(weights_init_normal)
 
 # Configure data loader
-os.makedirs("/home/data/mnist", exist_ok=True)
+os.makedirs("/home/data/STL10", exist_ok=True)
 dataloader = torch.utils.data.DataLoader(
-    datasets.MNIST(
-        "/home/data/mnist",
-        train=True,
+    datasets.STL10(
+        "/home/data/STL10",
+        split="train",
         download=True,
         transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         ),
     ),
     batch_size=opt.batch_size,
@@ -159,7 +159,7 @@ def sample_image(n_row, batches_done):
     labels = np.array([num for _ in range(n_row) for num in range(n_row)])
     labels = Variable(LongTensor(labels))
     gen_imgs = generator(z, labels)
-    save_image(gen_imgs.data, "images/%d.png" % batches_done, nrow=n_row, normalize=True)
+    save_image(gen_imgs.data, "STL10/%d.png" % batches_done, nrow=n_row, normalize=True)
 
 
 # ----------
