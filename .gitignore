@@ -10,3 +10,4 @@ implementations/*/images
 implementations/*/saved_models
 
 __pycache__
+implementations/acgan/CIFAR10/
