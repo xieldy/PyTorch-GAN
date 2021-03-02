@@ -11,3 +11,4 @@ implementations/*/saved_models
 
 __pycache__
 implementations/acgan/CIFAR10/
+implementations/acgan/test*/*.png
