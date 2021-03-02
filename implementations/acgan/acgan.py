@@ -1,8 +1,8 @@
 import argparse
-from io import UnsupportedOperation
 import os
 import numpy as np
-import math
+import time
+
 
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
@@ -53,7 +53,17 @@ channels = dataset_config[opt.dataset]["channels"]
 
 
 os.makedirs(opt.testname, exist_ok=True)
-writer = SummaryWriter(log_dir='/home/data/checkpoints_xieyi/'+opt.testname)
+writer_path = '/home/data/checkpoints_xieyi/'+opt.testname
+if os.path.exists(writer_path):
+    del_list = os.listdir(writer_path)
+    for f in del_list:
+        file_path = os.path.join(writer_path, f)
+        os.remove(file_path)
+        print("delete success:", file_path)
+    os.removedirs(writer_path)
+    time.sleep(10)
+    
+writer = SummaryWriter(writer_path)
 cuda = True if torch.cuda.is_available() else False
 
 
