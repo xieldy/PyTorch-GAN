@@ -165,7 +165,7 @@ discriminator.apply(weights_init_normal)
 
 # Configure data loader
 os.makedirs("/home/data/"+opt.dataset, exist_ok=True)
-if opt.dataset == 'STL10' or 'ImageNet':
+if opt.dataset == 'STL10' or opt.dataset == 'ImageNet':
     dataloader = torch.utils.data.DataLoader(
         datasets.__dict__[opt.dataset](
             "/home/data/"+opt.dataset,
